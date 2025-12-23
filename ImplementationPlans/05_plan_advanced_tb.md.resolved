@@ -1,0 +1,25 @@
+# Implementation Plan - Advanced Trial Balance
+
+The goal is to provide a more structured and grouped view of account balances, categorized by Assets, Liabilities, and Equity.
+
+## Proposed Changes
+
+### [NEW] [TrialBalanceDTOs.cs](file:///e:/Users/Haider/Documents/Source/Practice/MatechoTest/GeneralLedgerService/Models/TrialBalanceDTOs.cs)
+Define the classes necessary to represent the hierarchical JSON structure requested.
+
+### [MODIFY] [ILedgerService.cs](file:///e:/Users/Haider/Documents/Source/Practice/MatechoTest/GeneralLedgerService/Services/LedgerService.cs)
+Add `GetAdvancedTrialBalanceAsync` method signature.
+
+### [MODIFY] [LedgerService.cs](file:///e:/Users/Haider/Documents/Source/Practice/MatechoTest/GeneralLedgerService/Services/LedgerService.cs)
+Implement the grouping logic:
+1. Fetch all accounts.
+2. Group by `AccountType` (Asset, Liability, Equity).
+3. Sum totals for each group.
+4. Construct the complex result object.
+
+### [MODIFY] [LedgerController.cs](file:///e:/Users/Haider/Documents/Source/Practice/MatechoTest/GeneralLedgerService/Controllers/LedgerController.cs)
+Add the `GET api/ledger/trial-balance-advance` endpoint.
+
+## Verification Plan
+- Use Postman to call the new endpoint.
+- Verify the JSON structure matches the requested format exactly.
