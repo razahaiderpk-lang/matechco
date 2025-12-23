@@ -1,5 +1,6 @@
 using GeneralLedgerService.Domain;
 using GeneralLedgerService.Data;
+using GeneralLedgerService.Models;
 using Microsoft.EntityFrameworkCore;
 using System.Transactions;
 
@@ -10,6 +11,7 @@ public interface ILedgerService
     Task<JournalEntry> PostEntryAsync(JournalEntry entry);
     Task<decimal> GetAccountBalanceAsync(int accountId);
     Task<Dictionary<string, decimal>> GetTrialBalanceAsync();
+    Task<AdvancedTrialBalanceResponse> GetAdvancedTrialBalanceAsync();
 }
 
 public class LedgerService : ILedgerService
@@ -69,5 +71,39 @@ public class LedgerService : ILedgerService
     {
         return await _context.Accounts
             .ToDictionaryAsync(a => a.Name, a => a.Balance);
+    }
+
+    public async Task<AdvancedTrialBalanceResponse> GetAdvancedTrialBalanceAsync()
+    {
+        var accounts = await _context.Accounts.ToListAsync();
+
+        var assetAccounts = accounts.Where(a => a.Type == AccountType.Asset).ToList();
+        var liabilityAccounts = accounts.Where(a => a.Type == AccountType.Liability).ToList();
+        var equityAccounts = accounts.Where(a => a.Type == AccountType.Equity).ToList();
+
+        var response = new AdvancedTrialBalanceResponse
+        {
+            Asset = new AssetSection
+            {
+                Ledgers = assetAccounts.Select(a => new Dictionary<string, decimal> { { a.Name, a.Balance } }).ToList(),
+                TotalAsset = assetAccounts.Sum(a => a.Balance)
+            },
+            LiabilityEquity = new LiabilityEquitySection
+            {
+                Liability = new LiabilitySubsection
+                {
+                    Ledgers = liabilityAccounts.Select(a => new Dictionary<string, decimal> { { a.Name, a.Balance } }).ToList(),
+                    TotalLiability = liabilityAccounts.Sum(a => a.Balance)
+                },
+                Equity = new EquitySubsection
+                {
+                    Ledgers = equityAccounts.Select(a => new Dictionary<string, decimal> { { a.Name, a.Balance } }).ToList(),
+                    TotalEquity = equityAccounts.Sum(a => a.Balance)
+                },
+                TotalLiabilityEquity = liabilityAccounts.Sum(a => a.Balance) + equityAccounts.Sum(a => a.Balance)
+            }
+        };
+
+        return response;
     }
 }

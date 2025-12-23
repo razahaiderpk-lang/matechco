@@ -1,5 +1,6 @@
 using GeneralLedgerService.Domain;
 using GeneralLedgerService.Services;
+using GeneralLedgerService.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -48,5 +49,12 @@ public class LedgerController : ControllerBase
     {
         var balance = await _ledgerService.GetAccountBalanceAsync(accountId);
         return Ok(balance);
+    }
+
+    [HttpGet("trial-balance-advance")]
+    public async Task<ActionResult<AdvancedTrialBalanceResponse>> GetAdvancedTrialBalance()
+    {
+        var result = await _ledgerService.GetAdvancedTrialBalanceAsync();
+        return Ok(result);
     }
 }
