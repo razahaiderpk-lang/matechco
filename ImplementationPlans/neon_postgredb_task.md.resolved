@@ -1,0 +1,6 @@
+# Task: Start PostgreSQL Container
+
+- [x] Abandon Docker approach (crashing)
+- [x] Initialize Neon connection using `neonctl`
+- [x] Configure application with Neon connection string
+- [x] Verify connectivity

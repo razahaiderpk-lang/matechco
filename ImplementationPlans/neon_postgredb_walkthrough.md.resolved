@@ -1,0 +1,26 @@
+# Walkthrough - Neon PostgreSQL Integration
+
+I have successfully switched the database from a local Docker container to a cloud-hosted Neon PostgreSQL instance.
+
+## Changes Made
+
+### 1. Database Configuration
+Updated the [appsettings.json](file:///e:/Users/Haider/Documents/Source/Practice/MatechoTest/GeneralLedgerService/appsettings.json) file with the Neon connection string using the `development` branch of your `MatechoTest` project.
+
+```json
+"ConnectionStrings": {
+  "DefaultConnection": "Host=ep-quiet-bonus-ahvkijol.c-3.us-east-1.aws.neon.tech;Database=neondb;Username=neondb_owner;Password=***;Port=5432;SSL Mode=Require;Trust Server Certificate=true"
+}
+```
+
+### 2. Neon Connection Retrieval
+I used the `neonctl` CLI to:
+- Identify your organization: `org-blue-band-05228507`
+- Locate the project: `cold-violet-32243113` (MatechoTest)
+- Retrieve the connection string for the `development` branch.
+
+## Verification
+- Task list has been updated to reflect completion.
+- [appsettings.json](file:///e:/Users/Haider/Documents/Source/Practice/MatechoTest/GeneralLedgerService/appsettings.json) has been verified as updated.
+
+You are now ready to run your migrations or start the application!
