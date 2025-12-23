@@ -1,9 +1,11 @@
 using GeneralLedgerService.Domain;
 using GeneralLedgerService.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace GeneralLedgerService.Controllers;
 
+[Authorize]
 [ApiController]
 [Route("api/[controller]")]
 public class LedgerController : ControllerBase

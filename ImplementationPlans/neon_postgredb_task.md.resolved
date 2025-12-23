@@ -4,3 +4,24 @@
 - [x] Initialize Neon connection using `neonctl`
 - [x] Configure application with Neon connection string
 - [x] Verify connectivity
+
+# Task: Integrate Plug-and-Play Authentication
+- [x] Research and Plan Auth (Clerk)
+- [x] Install JWT Bearer package
+- [x] Configure Clerk in appsettings.json
+- [x] Add Auth middleware to Program.cs
+- [x] Secure Controllers with [Authorize]
+
+# Task: Debug Connection Issue
+- [x] Check port configuration
+- [x] Terminate hung process
+- [x] Restart application with HTTPS profile
+
+# Task: Documentation
+- [x] Update README.md with run instructions
+
+# Task: Debug 401 Unauthorized
+- [x] Inspect JWT claims (iss, aud)
+- [x] Enable Authentication logging
+- [x] Enable PII to see detailed error
+- [x] Adjust TokenValidationParameters (Lax mode for demo)

@@ -1,0 +1,40 @@
+# Implementation Plan - Clerk Authentication Integration
+
+The goal is to add "plug and play" authentication to the `GeneralLedgerService` using **Clerk**, which provides a managed identity service similar to how Neon provides managed PostgreSQL.
+
+## User Review Required
+
+> [!IMPORTANT]
+> You will need to create a free account at [Clerk.com](https://clerk.com) and create a new project. 
+> Once created, you'll need to provide the **Authority** (your Clerk Issuer URL) and **Authorized Party** (your Frontend URL or Client ID).
+
+## Proposed Changes
+
+### 1. Dependencies [MODIFY] [GeneralLedgerService.csproj](file:///e:/Users/Haider/Documents/Source/Practice/MatechoTest/GeneralLedgerService/GeneralLedgerService.csproj)
+Add the JWT Bearer authentication package:
+- `Microsoft.AspNetCore.Authentication.JwtBearer`
+
+### 2. Configuration [MODIFY] [appsettings.json](file:///e:/Users/Haider/Documents/Source/Practice/MatechoTest/GeneralLedgerService/appsettings.json)
+Add Clerk settings:
+```json
+"Clerk": {
+  "Authority": "https://your-clerk-issuer-url/",
+  "Audience": "clerk"
+}
+```
+
+### 3. Middleware Integration [MODIFY] [Program.cs](file:///e:/Users/Haider/Documents/Source/Practice/MatechoTest/GeneralLedgerService/Program.cs)
+- Register Authentication and JwtBearer services.
+- Add `app.UseAuthentication()` before `app.UseAuthorization()`.
+
+### 4. Controller Protection [MODIFY] [Controllers/LedgerController.cs](file:///e:/Users/Haider/Documents/Source/Practice/MatechoTest/GeneralLedgerService/Controllers/LedgerController.cs)
+- Add the `[Authorize]` attribute to the controllers or specific actions.
+
+## Verification Plan
+
+### Automated Tests
+- Run `dotnet build` to ensure the new dependencies are resolved.
+
+### Manual Verification
+- Attempt to call the API without a token to verify a `401 Unauthorized` response.
+- Use a JWT from the Clerk dashboard to verify successful access.
