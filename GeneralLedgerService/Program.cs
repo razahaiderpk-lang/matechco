@@ -61,6 +61,14 @@ builder.Services.AddAuthorization();
 
 var app = builder.Build();
 
+// Automatically create database and tables if they don't exist
+using (var scope = app.Services.CreateScope())
+{
+    var context = scope.ServiceProvider.GetRequiredService<LedgerDbContext>();
+    context.Database.EnsureCreated();
+}
+
+
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
