@@ -1,0 +1,82 @@
+# Project Run and Access Guide
+
+This guide provides instructions on how to set up, run, and interact with the `GeneralLedgerService` API.
+
+## Prerequisites
+
+- [.NET 9.0 SDK](https://dotnet.microsoft.com/download/dotnet/9.0)
+- [PostgreSQL](https://www.postgresql.org/download/) database
+- [Postman](https://www.postman.com/downloads/) or any HTTP client
+
+## Database Setup
+
+The application is configured to use a PostgreSQL database. 
+
+1.  **Ensure PostgreSQL is running** on your machine.
+2.  **Create a database** named `GeneralLedger`.
+3.  **Update Connection String** (if necessary):
+    - File: [appsettings.json](file:///e:/Users/Haider/Documents/Source/Practice/MatechoTest/GeneralLedgerService/appsettings.json)
+    - Default credentials: `Host=localhost;Database=GeneralLedger;Username=postgres;Password=password`
+
+> [!IMPORTANT]
+> Since there are no existing migrations in the project, you may need to create them first or ensure the database schema matches the domain models.
+
+## How to Run the Project
+
+1.  Open a terminal and navigate to the project root:
+    ```powershell
+    cd e:\Users\Haider\Documents\Source\Practice\MatechoTest\GeneralLedgerService
+    ```
+2.  Run the application:
+    ```powershell
+    dotnet run
+    ```
+3.  The application will be available at:
+    - **HTTPS**: `https://localhost:7066`
+    - **HTTP**: `http://localhost:5135`
+
+## API Endpoints and Postman Access
+
+You can use the following endpoints in Postman. Use `https://localhost:7066` as the base URL.
+
+### Accounts API
+- **List Accounts**
+  - `GET /api/Accounts`
+- **Create Account**
+  - `POST /api/Accounts`
+  - Body (JSON):
+    ```json
+    {
+      "code": "1001",
+      "name": "Cash",
+      "type": "Asset"
+    }
+    ```
+
+### Ledger API
+- **Post Journal Entry**
+  - `POST /api/Ledger/entries`
+  - Headers: `X-Request-ID` (Optional, for idempotency)
+  - Body (JSON):
+    ```json
+    {
+      "date": "2023-10-27T10:00:00Z",
+      "reference": "REF001",
+      "description": "Initial Investment",
+      "lines": [
+        { "accountId": 1, "amount": 1000, "isDebit": true },
+        { "accountId": 2, "amount": 1000, "isDebit": false }
+      ]
+    }
+    ```
+- **Get Trial Balance**
+  - `GET /api/Ledger/trial-balance`
+- **Get Account Balance**
+  - `GET /api/Ledger/accounts/{accountId}/balance`
+
+## Verification Plan
+
+### Manual Verification
+1.  Run the project using `dotnet run`.
+2.  Open Postman and send a `GET` request to `https://localhost:7066/api/Accounts`.
+3.  Verify that you receive a successful response (likely an empty list `[]` if the DB is new).
