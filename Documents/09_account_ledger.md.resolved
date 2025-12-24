@@ -1,0 +1,42 @@
+# Account Ledger Report Implementation Plan
+
+Implement a detailed Account Ledger report that provides a chronological history of transactions for a specific account, including opening balance, period transactions, and closing balance.
+
+## User Review Required
+
+> [!NOTE]
+> **Schema Mapping**: As requested, no new fields will be added to the database. Fields in the requested JSON that are missing in our current schema (like `counterparty`, `voucherType`, `postedBy`) will be omitted or set to default/null values.
+
+## Proposed Changes
+
+### [GeneralLedgerService]
+
+#### [NEW] [AccountLedgerDTOs.cs](file:///e:/Users/Haider/Documents/Source/Practice/MatechoTest/GeneralLedgerService/Models/AccountLedgerDTOs.cs)
+- Define `AccountLedgerResponse`, `AccountLedgerHeader`, `OpeningClosingBalance`, `LedgerTransaction`, `LedgerSummary`, and `LedgerPagination` models.
+
+#### [MODIFY] [ILedgerService.cs](file:///e:/Users/Haider/Documents/Source/Practice/MatechoTest/GeneralLedgerService/Services/ILedgerService.cs)
+- Add `Task<AccountLedgerResponse> GetAccountLedgerAsync(int accountId, DateOnly fromDate, DateOnly toDate, int page = 1, int pageSize = 50)`.
+
+#### [MODIFY] [LedgerService.cs](file:///e:/Users/Haider/Documents/Source/Practice/MatechoTest/GeneralLedgerService/Services/LedgerService.cs)
+- Implement `GetAccountLedgerAsync`.
+- **Logic**:
+    1. **Opening Balance**: Sum all [JournalEntryLine](file:///e:/Users/Haider/Documents/Source/Practice/MatechoTest/GeneralLedgerService/Domain/JournalEntry.cs#39-49) amounts for the `accountId` where `JournalEntry.Date < fromDate`.
+    2. **Transactions**: Fetch [JournalEntryLine](file:///e:/Users/Haider/Documents/Source/Practice/MatechoTest/GeneralLedgerService/Domain/JournalEntry.cs#39-49) items for the `accountId` between `fromDate` and `toDate`.
+    3. **Running Balance**: Calculate a running balance starting from the opening balance.
+    4. **Summary**: Aggregate totals for the period (Total Debits, Total Credits, Movement).
+    5. **Closing Balance**: `Opening Balance + Period Net Movement`.
+
+#### [MODIFY] [LedgerController.cs](file:///e:/Users/Haider/Documents/Source/Practice/MatechoTest/GeneralLedgerService/Controllers/LedgerController.cs)
+- Add `GET /api/ledger/accounts/{accountId}/ledger` endpoint accepting `fromDate`, `toDate`, `page`, and `pageSize`.
+
+## Verification Plan
+
+### Automated Tests
+- Run `dotnet build` to ensure compilation.
+
+### Manual Verification
+- Post multiple entries on different dates for a single account.
+- Call the ledger endpoint with various date ranges.
+- Verify the `openingBalance` correctly sums past entries.
+- Verify the running balance in the `transactions` list accurately tracks the account's state.
+- Verify `closingBalance = openingBalance + netMovement`.

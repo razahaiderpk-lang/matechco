@@ -28,6 +28,13 @@ public class LedgerDbContext : DbContext
         {
             entity.HasKey(e => e.Id);
             entity.Property(e => e.Reference).HasMaxLength(50);
+            
+            // Map DateOnly to DateTime at the database level to maintain compatibility with timestamp columns
+            entity.Property(e => e.Date)
+                  .HasConversion(
+                      v => DateTime.SpecifyKind(v.ToDateTime(TimeOnly.MinValue), DateTimeKind.Utc),
+                      v => DateOnly.FromDateTime(v));
+
             entity.HasMany(e => e.Lines)
                   .WithOne(e => e.JournalEntry)
                   .HasForeignKey(e => e.JournalEntryId)

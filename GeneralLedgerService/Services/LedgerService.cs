@@ -12,6 +12,7 @@ public interface ILedgerService
     Task<decimal> GetAccountBalanceAsync(int accountId);
     Task<Dictionary<string, decimal>> GetTrialBalanceAsync();
     Task<DetailedTrialBalanceResponse> GetDetailedTrialBalanceAsync(DateOnly reportDate);
+    Task<AccountLedgerResponse> GetAccountLedgerAsync(int accountId, DateOnly fromDate, DateOnly toDate, int page = 1, int pageSize = 50);
     Task<BalanceSheetResponse> GetBalanceSheetAsync(DateOnly asOfDate);
 }
 
@@ -115,6 +116,113 @@ public class LedgerService : ILedgerService
         response.Summary.TotalAccounts = response.Data.Count;
         response.Summary.Difference = Math.Abs(response.Summary.TotalDebits - response.Summary.TotalCredits);
         response.Summary.BalanceCheck = response.Summary.Difference < 0.001m ? "Matched" : "Mismatched";
+
+        return response;
+    }
+
+    public async Task<AccountLedgerResponse> GetAccountLedgerAsync(int accountId, DateOnly fromDate, DateOnly toDate, int page = 1, int pageSize = 50)
+    {
+        var account = await _context.Accounts.FindAsync(accountId);
+        if (account == null)
+        {
+            throw new KeyNotFoundException($"Account with ID {accountId} not found.");
+        }
+
+        // 1. Calculate Opening Balance (Sum all entries before fromDate)
+        var openingAmount = await _context.JournalEntryLines
+            .Include(l => l.JournalEntry)
+            .Where(l => l.AccountId == accountId && l.JournalEntry.Date < fromDate)
+            .SumAsync(l => l.Amount);
+
+        // 2. Fetch Transactions for the period
+        var totalRecords = await _context.JournalEntryLines
+            .Include(l => l.JournalEntry)
+            .Where(l => l.AccountId == accountId && l.JournalEntry.Date >= fromDate && l.JournalEntry.Date <= toDate)
+            .CountAsync();
+
+        var periodLines = await _context.JournalEntryLines
+            .Include(l => l.JournalEntry)
+            .Where(l => l.AccountId == accountId && l.JournalEntry.Date >= fromDate && l.JournalEntry.Date <= toDate)
+            .OrderBy(l => l.JournalEntry.Date)
+            .ThenBy(l => l.Id)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync();
+
+        // 3. Prepare Response
+        var response = new AccountLedgerResponse
+        {
+            Account = new AccountLedgerHeader
+            {
+                AccountId = account.Id.ToString(),
+                AccountCode = account.Code,
+                AccountName = account.Name,
+                AccountType = account.Type.ToString(),
+                NormalBalance = (account.Type == AccountType.Asset || account.Type == AccountType.Expense) ? "Debit" : "Credit"
+            },
+            Period = new LedgerPeriod
+            {
+                FromDate = fromDate,
+                ToDate = toDate
+            },
+            OpeningBalance = new OpeningClosingBalance
+            {
+                Date = fromDate.AddDays(-1),
+                Amount = Math.Abs(openingAmount),
+                Type = openingAmount >= 0 ? "Debit" : "Credit"
+            }
+        };
+
+        // 4. Calculate Running Balance and map transactions
+        decimal currentRunningBalance = openingAmount;
+        foreach (var line in periodLines)
+        {
+            currentRunningBalance += line.Amount;
+            var transaction = new LedgerTransaction
+            {
+                TransactionId = $"TXN-{line.JournalEntryId}",
+                Date = line.JournalEntry.Date,
+                Reference = line.JournalEntry.Reference,
+                Description = line.Description,
+                Debit = line.Amount > 0 ? line.Amount : 0,
+                Credit = line.Amount < 0 ? Math.Abs(line.Amount) : 0,
+                Balance = Math.Abs(currentRunningBalance),
+                BalanceType = currentRunningBalance >= 0 ? "Debit" : "Credit",
+                PostedAt = DateTime.SpecifyKind(line.JournalEntry.Date.ToDateTime(TimeOnly.MinValue), DateTimeKind.Utc)
+            };
+            response.Transactions.Add(transaction);
+        }
+
+        // 5. Populate Closing Balance and Summary
+        var periodDebits = response.Transactions.Sum(t => t.Debit);
+        var periodCredits = response.Transactions.Sum(t => t.Credit);
+
+        response.ClosingBalance = new OpeningClosingBalance
+        {
+            Date = toDate,
+            Amount = Math.Abs(currentRunningBalance),
+            Type = currentRunningBalance >= 0 ? "Debit" : "Credit"
+        };
+
+        response.Summary = new LedgerSummary
+        {
+            TotalDebits = periodDebits,
+            TotalCredits = periodCredits,
+            NetMovement = periodDebits - periodCredits,
+            TransactionCount = totalRecords,
+            AverageDebit = totalRecords > 0 ? periodDebits / totalRecords : 0,
+            AverageCredit = totalRecords > 0 ? periodCredits / totalRecords : 0,
+            HighestTransaction = response.Transactions.Any() ? response.Transactions.Max(t => Math.Max(t.Debit, t.Credit)) : 0,
+            LowestTransaction = response.Transactions.Any() ? response.Transactions.Min(t => Math.Max(t.Debit, t.Credit)) : 0
+        };
+
+        response.Pagination = new LedgerPagination
+        {
+            Page = page,
+            PageSize = pageSize,
+            TotalRecords = totalRecords,
+            TotalPages = (int)Math.Ceiling((double)totalRecords / pageSize)
+        };
 
         return response;
     }

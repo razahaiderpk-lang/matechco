@@ -59,4 +59,16 @@ public class LedgerController : ControllerBase
         var result = await _ledgerService.GetBalanceSheetAsync(targetDate);
         return Ok(result);
     }
+
+    [HttpGet("accounts/{accountId}/ledger")]
+    public async Task<ActionResult<AccountLedgerResponse>> GetAccountLedger(
+        int accountId, 
+        [FromQuery] DateOnly fromDate, 
+        [FromQuery] DateOnly toDate,
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 50)
+    {
+        var result = await _ledgerService.GetAccountLedgerAsync(accountId, fromDate, toDate, page, pageSize);
+        return Ok(result);
+    }
 }
