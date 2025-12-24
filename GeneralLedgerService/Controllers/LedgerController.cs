@@ -38,9 +38,10 @@ public class LedgerController : ControllerBase
     }
 
     [HttpGet("trial-balance")]
-    public async Task<ActionResult<Dictionary<string, decimal>>> GetTrialBalance()
+    public async Task<ActionResult<DetailedTrialBalanceResponse>> GetTrialBalance([FromQuery] DateOnly? reportDate)
     {
-        var result = await _ledgerService.GetTrialBalanceAsync();
+        var targetDate = reportDate ?? DateOnly.FromDateTime(DateTime.Today);
+        var result = await _ledgerService.GetDetailedTrialBalanceAsync(targetDate);
         return Ok(result);
     }
 

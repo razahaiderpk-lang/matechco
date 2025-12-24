@@ -1,0 +1,41 @@
+# Upgrade to Detailed Trial Balance Report
+
+Upgrade the `trial-balance` endpoint from a simple dictionary to a comprehensive financial report that includes account-level debit/credit totals and a balanced summary.
+
+## Proposed Changes
+
+### [GeneralLedgerService]
+
+#### [NEW] [DetailedTrialBalanceDTOs.cs](file:///e:/Users/Haider/Documents/Source/Practice/MatechoTest/GeneralLedgerService/Models/DetailedTrialBalanceDTOs.cs)
+- Define `DetailedTrialBalanceResponse`, `TrialBalanceAccountData`, and `TrialBalanceSummary` models matching the requested JSON.
+
+#### [MODIFY] [ILedgerService.cs](file:///e:/Users/Haider/Documents/Source/Practice/MatechoTest/GeneralLedgerService/Services/ILedgerService.cs)
+- Add `Task<DetailedTrialBalanceResponse> GetDetailedTrialBalanceAsync(DateOnly reportDate)`.
+
+#### [MODIFY] [LedgerService.cs](file:///e:/Users/Haider/Documents/Source/Practice/MatechoTest/GeneralLedgerService/Services/LedgerService.cs)
+- Implement `GetDetailedTrialBalanceAsync`.
+- Logic:
+    1. Query all `JournalEntryLines` where `JournalEntry.Date <= reportDate`.
+    2. Group by `AccountId`.
+    3. For each account, calculate:
+        - `debitTotal`: Sum of positive amounts.
+        - `creditTotal`: Absolute sum of negative amounts.
+        - `netBalance`: `abs(debitTotal - creditTotal)`.
+        - `balanceType`: "Debit" if net >= 0, "Credit" otherwise.
+    4. Calculate summary totals and counts.
+    5. Populate the response with metadata and hardcoded format settings (USD).
+
+#### [MODIFY] [LedgerController.cs](file:///e:/Users/Haider/Documents/Source/Practice/MatechoTest/GeneralLedgerService/Controllers/LedgerController.cs)
+- Update [GetTrialBalance](file:///e:/Users/Haider/Documents/Source/Practice/MatechoTest/GeneralLedgerService/Controllers/LedgerController.cs#40-46) to accept `DateOnly? reportDate`.
+- Call the new service method and return the detailed result.
+
+## Verification Plan
+
+### Automated Tests
+- Run `dotnet build` to ensure no regression.
+
+### Manual Verification
+- Post balanced entries.
+- Call `/api/ledger/trial-balance?reportDate=YYYY-MM-DD`.
+- Verify the `summary.balanceCheck` is "Matched" and `difference` is 0.00.
+- Verify account details match the ledger state.

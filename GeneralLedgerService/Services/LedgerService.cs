@@ -11,6 +11,7 @@ public interface ILedgerService
     Task<JournalEntry> PostEntryAsync(JournalEntry entry);
     Task<decimal> GetAccountBalanceAsync(int accountId);
     Task<Dictionary<string, decimal>> GetTrialBalanceAsync();
+    Task<DetailedTrialBalanceResponse> GetDetailedTrialBalanceAsync(DateOnly reportDate);
     Task<BalanceSheetResponse> GetBalanceSheetAsync(DateOnly asOfDate);
 }
 
@@ -68,6 +69,54 @@ public class LedgerService : ILedgerService
     {
         return await _context.Accounts
             .ToDictionaryAsync(a => a.Name, a => a.Balance);
+    }
+
+    public async Task<DetailedTrialBalanceResponse> GetDetailedTrialBalanceAsync(DateOnly reportDate)
+    {
+        var accounts = await _context.Accounts.ToListAsync();
+        
+        // Sum debits and credits separately per account up to the report date
+        var accountStats = await _context.JournalEntryLines
+            .Include(l => l.JournalEntry)
+            .Where(l => l.JournalEntry.Date <= reportDate)
+            .GroupBy(l => l.AccountId)
+            .Select(g => new
+            {
+                AccountId = g.Key,
+                DebitTotal = g.Where(x => x.Amount > 0).Sum(x => x.Amount),
+                CreditTotal = Math.Abs(g.Where(x => x.Amount < 0).Sum(x => x.Amount)),
+                NetBalance = g.Sum(x => x.Amount)
+            })
+            .ToListAsync();
+
+        var response = new DetailedTrialBalanceResponse
+        {
+            ReportDate = reportDate,
+            Data = (from account in accounts
+                    join stats in accountStats on account.Id equals stats.AccountId into joined
+                    from s in joined.DefaultIfEmpty()
+                    select new TrialBalanceAccountData
+                    {
+                        AccountCode = account.Code,
+                        AccountName = account.Name,
+                        AccountType = account.Type.ToString(),
+                        DebitTotal = s?.DebitTotal ?? 0,
+                        CreditTotal = s?.CreditTotal ?? 0,
+                        NetBalance = Math.Abs(s?.NetBalance ?? 0),
+                        BalanceType = (s?.NetBalance ?? 0) >= 0 ? "Debit" : "Credit"
+                    }).ToList()
+        };
+
+        // Calculate Summary
+        response.Summary.TotalDebits = response.Data.Where(d => d.BalanceType == "Debit").Sum(d => d.NetBalance);
+        response.Summary.TotalCredits = response.Data.Where(d => d.BalanceType == "Credit").Sum(d => d.NetBalance);
+        response.Summary.DebitAccounts = response.Data.Count(d => d.BalanceType == "Debit" && d.NetBalance > 0);
+        response.Summary.CreditAccounts = response.Data.Count(d => d.BalanceType == "Credit" && d.NetBalance > 0);
+        response.Summary.TotalAccounts = response.Data.Count;
+        response.Summary.Difference = Math.Abs(response.Summary.TotalDebits - response.Summary.TotalCredits);
+        response.Summary.BalanceCheck = response.Summary.Difference < 0.001m ? "Matched" : "Mismatched";
+
+        return response;
     }
 
     public async Task<BalanceSheetResponse> GetBalanceSheetAsync(DateOnly asOfDate)
