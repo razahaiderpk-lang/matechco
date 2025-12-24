@@ -51,10 +51,11 @@ public class LedgerController : ControllerBase
         return Ok(balance);
     }
 
-    [HttpGet("trial-balance-advance")]
-    public async Task<ActionResult<AdvancedTrialBalanceResponse>> GetAdvancedTrialBalance()
+    [HttpGet("balance-sheet")]
+    public async Task<ActionResult<BalanceSheetResponse>> GetBalanceSheet([FromQuery] DateOnly? asOfDate)
     {
-        var result = await _ledgerService.GetAdvancedTrialBalanceAsync();
+        var targetDate = asOfDate ?? DateOnly.FromDateTime(DateTime.Today);
+        var result = await _ledgerService.GetBalanceSheetAsync(targetDate);
         return Ok(result);
     }
 }

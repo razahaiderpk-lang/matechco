@@ -2,7 +2,7 @@ using System.Text.Json.Serialization;
 
 namespace GeneralLedgerService.Models;
 
-public class AdvancedTrialBalanceResponse
+public class BalanceSheetResponse
 {
     public AssetSection Asset { get; set; } = new();
 

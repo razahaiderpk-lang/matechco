@@ -1,0 +1,45 @@
+# Refactor to Balance Sheet Report
+
+Convert the existing trial balance advancement into a formal Balance Sheet that reflects the financial position (Assets, Liabilities, Equity) "as of" a specific date.
+
+## User Review Required
+
+> [!IMPORTANT]
+> **Calculation Logic**: To support the "As of Date", the system will calculate balances by summing all journal entries up to the specified date, rather than just returning the current cached account balance.
+
+## Proposed Changes
+
+### [GeneralLedgerService]
+
+#### [MODIFY] [BalanceSheetDTOs.cs](file:///e:/Users/Haider/Documents/Source/Practice/MatechoTest/GeneralLedgerService/Models/TrialBalanceDTOs.cs) (To be renamed/updated)
+- Rename [AdvancedTrialBalanceResponse](file:///e:/Users/Haider/Documents/Source/Practice/MatechoTest/GeneralLedgerService/Models/TrialBalanceDTOs.cs#5-12) to `BalanceSheetResponse`.
+- Ensure naming strictly follows Balance Sheet conventions.
+
+#### [MODIFY] [ILedgerService.cs](file:///e:/Users/Haider/Documents/Source/Practice/MatechoTest/GeneralLedgerService/Services/LedgerService.cs)
+- Add `Task<BalanceSheetResponse> GetBalanceSheetAsync(DateOnly asOfDate)`.
+
+#### [MODIFY] [LedgerService.cs](file:///e:/Users/Haider/Documents/Source/Practice/MatechoTest/GeneralLedgerService/Services/LedgerService.cs)
+- Implement `GetBalanceSheetAsync`.
+- Logic:
+    1. Query all `JournalEntryLines` where the parent `JournalEntry.Date <= asOfDate`.
+    2. Group by `AccountId` and sum `Amount` to get the "As of" balance.
+    3. Categorize balances:
+        - **Assets, Liabilities, Equity**: Grouped into their respective sections.
+        - **Revenue & Expenses**: Calculate `Net Income = Total Revenue + Total Expenses` (where expenses are negative amounts).
+    4. Add a "Net Income (Loss)" line item to the **Equity** section to ensure the Balance Sheet balances: `Assets = Liabilities + (Equity + Net Income)`.
+    5. Calculate totals for each section.
+
+#### [MODIFY] [LedgerController.cs](file:///e:/Users/Haider/Documents/Source/Practice/MatechoTest/GeneralLedgerService/Controllers/LedgerController.cs)
+- Rename endpoint from `/api/ledger/trial-balance-advance` to `/api/ledger/balance-sheet`.
+- Add `DateOnly? asOfDate` query parameter (defaulting to the current date if not provided).
+
+## Verification Plan
+
+### Automated Tests
+- Run `dotnet build` to verify compilation.
+
+### Manual Verification
+- Post entries with different dates (some in the past, some in the future).
+- Call `/api/ledger/balance-sheet?asOfDate=YYYY-MM-DD`.
+- Verify that only entries on or before that date are reflected in the totals.
+- Verify the hierarchical structure (Assets vs Liabilities & Equity) is correct.

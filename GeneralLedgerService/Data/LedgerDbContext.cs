@@ -29,7 +29,7 @@ public class LedgerDbContext : DbContext
             entity.HasKey(e => e.Id);
             entity.Property(e => e.Reference).HasMaxLength(50);
             entity.HasMany(e => e.Lines)
-                  .WithOne()
+                  .WithOne(e => e.JournalEntry)
                   .HasForeignKey(e => e.JournalEntryId)
                   .OnDelete(DeleteBehavior.Cascade);
         });

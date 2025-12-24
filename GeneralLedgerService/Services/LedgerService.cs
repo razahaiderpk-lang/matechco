@@ -11,7 +11,7 @@ public interface ILedgerService
     Task<JournalEntry> PostEntryAsync(JournalEntry entry);
     Task<decimal> GetAccountBalanceAsync(int accountId);
     Task<Dictionary<string, decimal>> GetTrialBalanceAsync();
-    Task<AdvancedTrialBalanceResponse> GetAdvancedTrialBalanceAsync();
+    Task<BalanceSheetResponse> GetBalanceSheetAsync(DateOnly asOfDate);
 }
 
 public class LedgerService : ILedgerService
@@ -70,15 +70,44 @@ public class LedgerService : ILedgerService
             .ToDictionaryAsync(a => a.Name, a => a.Balance);
     }
 
-    public async Task<AdvancedTrialBalanceResponse> GetAdvancedTrialBalanceAsync()
+    public async Task<BalanceSheetResponse> GetBalanceSheetAsync(DateOnly asOfDate)
     {
+        // Calculate balances "as of" date by summing all journal entries up to that date
+        var balances = await _context.JournalEntryLines
+            .Include(l => l.JournalEntry)
+            .Where(l => l.JournalEntry.Date <= asOfDate)
+            .GroupBy(l => l.AccountId)
+            .Select(g => new
+            {
+                AccountId = g.Key,
+                Balance = g.Sum(l => l.Amount)
+            })
+            .ToListAsync();
+
         var accounts = await _context.Accounts.ToListAsync();
 
-        var assetAccounts = accounts.Where(a => a.Type == AccountType.Asset).ToList();
-        var liabilityAccounts = accounts.Where(a => a.Type == AccountType.Liability).ToList();
-        var equityAccounts = accounts.Where(a => a.Type == AccountType.Equity).ToList();
+        // Join calculated balances with account definitions
+        var accountBalances = from account in accounts
+                              join balance in balances on account.Id equals balance.AccountId into joined
+                              from b in joined.DefaultIfEmpty()
+                              select new
+                              {
+                                  account.Name,
+                                  account.Type,
+                                  Balance = b?.Balance ?? 0
+                              };
 
-        var response = new AdvancedTrialBalanceResponse
+        var assetAccounts = accountBalances.Where(a => a.Type == AccountType.Asset).ToList();
+        var liabilityAccounts = accountBalances.Where(a => a.Type == AccountType.Liability).ToList();
+        var equityAccounts = accountBalances.Where(a => a.Type == AccountType.Equity).ToList();
+        
+        // Calculate Net Income (Revenue + Expenses, where expenses are negative)
+        // Note: In accounting, Net Income flows into Retained Earnings (Equity)
+        var revenueTotal = accountBalances.Where(a => a.Type == AccountType.Revenue).Sum(a => a.Balance);
+        var expenseTotal = accountBalances.Where(a => a.Type == AccountType.Expense).Sum(a => a.Balance);
+        var netIncome = revenueTotal + expenseTotal;
+
+        var response = new BalanceSheetResponse
         {
             Asset = new AssetSection
             {
@@ -97,9 +126,13 @@ public class LedgerService : ILedgerService
                     Ledgers = equityAccounts.Select(a => new Dictionary<string, decimal> { { a.Name, a.Balance } }).ToList(),
                     TotalEquity = equityAccounts.Sum(a => a.Balance)
                 },
-                TotalLiabilityEquity = liabilityAccounts.Sum(a => a.Balance) + equityAccounts.Sum(a => a.Balance)
+                TotalLiabilityEquity = liabilityAccounts.Sum(a => a.Balance) + equityAccounts.Sum(a => a.Balance) + netIncome
             }
         };
+
+        // Add Net Income as a line item in Equity to balance the report
+        response.LiabilityEquity.Equity.Ledgers.Add(new Dictionary<string, decimal> { { "Net Income (Loss)", netIncome } });
+        response.LiabilityEquity.Equity.TotalEquity += netIncome;
 
         return response;
     }
