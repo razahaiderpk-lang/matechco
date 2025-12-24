@@ -25,10 +25,7 @@ public class LedgerService : ILedgerService
 
     public async Task<JournalEntry> PostEntryAsync(JournalEntry entry)
     {
-        if (!entry.IsBalanced())
-        {
-            throw new InvalidOperationException("Journal entry is not balanced. Total Debits must equal Total Credits.");
-        }
+        entry.Validate();
 
         using var transaction = await _context.Database.BeginTransactionAsync();
         try

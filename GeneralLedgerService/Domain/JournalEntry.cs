@@ -16,6 +16,24 @@ public class JournalEntry
     {
         return Lines.Sum(l => l.Amount) == 0;
     }
+
+    public void Validate()
+    {
+        if (Lines.Count < 2)
+        {
+            throw new InvalidOperationException("A journal entry must have at least two lines.");
+        }
+
+        if (Lines.Any(l => l.Amount == 0))
+        {
+            throw new InvalidOperationException("A journal entry line cannot have an amount of zero.");
+        }
+
+        if (!IsBalanced())
+        {
+            throw new InvalidOperationException("Journal entry is not balanced. Total Debits must equal Total Credits.");
+        }
+    }
 }
 
 public class JournalEntryLine

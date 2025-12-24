@@ -1,0 +1,35 @@
+# Walkthrough - Neon PostgreSQL & Clerk Authentication Integration
+
+I have successfully switched the database to Neon and added Clerk as a "plug-and-play" authentication provider.
+
+## Changes Made
+
+### 1. Database Configuration (Neon)
+Updated [appsettings.json](file:///e:/Users/Haider/Documents/Source/Practice/MatechoTest/GeneralLedgerService/appsettings.json) with the Neon connection string.
+
+### 2. Authentication Integration (Clerk)
+Added JWT-based authentication to the .NET Web API:
+- **Dependencies**: Installed `Microsoft.AspNetCore.Authentication.JwtBearer` (v9.0.0).
+- **Configuration**: Added Clerk Authority (`https://accepted-wallaby-49.clerk.accounts.dev`) to [appsettings.json](file:///e:/Users/Haider/Documents/Source/Practice/MatechoTest/GeneralLedgerService/appsettings.json).
+- **Middleware**: Configured `Auth` and `JwtBearer` in [Program.cs](file:///e:/Users/Haider/Documents/Source/Practice/MatechoTest/GeneralLedgerService/Program.cs).
+- **Security**: Added the `[Authorize]` attribute to:
+    - [LedgerController.cs](file:///e:/Users/Haider/Documents/Source/Practice/MatechoTest/GeneralLedgerService/Controllers/LedgerController.cs)
+    - [AccountsController.cs](file:///e:/Users/Haider/Documents/Source/Practice/MatechoTest/GeneralLedgerService/Controllers/AccountsController.cs)
+
+### 3. Code Cleanup
+Removed the default .NET boilerplate files:
+- [DELETE] [WeatherForecastController.cs](file:///e:/Users/Haider/Documents/Source/Practice/MatechoTest/GeneralLedgerService/Controllers/WeatherForecastController.cs)
+- [DELETE] [WeatherForecast.cs](file:///e:/Users/Haider/Documents/Source/Practice/MatechoTest/GeneralLedgerService/WeatherForecast.cs)
+
+### 4. Advanced Trial Balance
+- **Advanced Trial Balance**: Added a structured endpoint `/api/ledger/trial-balance-advance` that groups accounts by category (Asset, Liability, Equity) and provides subtotals, matching the requested hierarchical JSON format.
+- **Transaction Validation**: Enhanced the [JournalEntry](file:///e:/Users/Haider/Documents/Source/Practice/MatechoTest/GeneralLedgerService/Domain/JournalEntry.cs#7-38) domain model and [LedgerService](file:///e:/Users/Haider/Documents/Source/Practice/MatechoTest/GeneralLedgerService/Services/LedgerService.cs#17-107) with additional validation:
+  - Minimum of two lines required for every entry (double-entry requirement).
+  - Zero-amount lines are explicitly disallowed.
+  - Automatic balance check (Total Debits = Total Credits).
+
+## Verification
+- Run `dotnet build` to confirm everything compiles.
+- Attempting to call `/api/ledger/trial-balance` will now return a `401 Unauthorized` unless a valid Clerk JWT is provided in the `Authorization: Bearer <TOKEN>` header.
+
+You are now ready to use a secure cloud-hosted database and authentication!

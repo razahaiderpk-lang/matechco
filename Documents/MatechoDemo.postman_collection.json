@@ -1,0 +1,306 @@
+{
+	"info": {
+		"_postman_id": "9a47c5b0-b6e6-43fc-a404-04002c93f75a",
+		"name": "MatechoDemo",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "23688857"
+	},
+	"item": [
+		{
+			"name": "Get JWT Token",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "sk_test_87QSWhEjNMrlFf1GLdhtlT2F41eRqSAYIjAQUXwSRp",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"user_id\": \"user_37FiNmUDJNhSLPbFMPhNUjE5T21\",\r\n    \"password\": \"Protest123@\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "https://api.clerk.com/v1/sign_in_tokens",
+					"protocol": "https",
+					"host": [
+						"api",
+						"clerk",
+						"com"
+					],
+					"path": [
+						"v1",
+						"sign_in_tokens"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Create Accounts",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "",
+						"value": "",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"name\": \"Loan from Bank\",\r\n    \"Code\": \"LOAN-01\",\r\n    \"type\": 2,\r\n    \"balance\": \"0.0\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "https://localhost:7066/api/accounts",
+					"protocol": "https",
+					"host": [
+						"localhost"
+					],
+					"port": "7066",
+					"path": [
+						"api",
+						"accounts"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Accounts List",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "",
+						"value": "",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "https://localhost:7066/api/accounts",
+					"protocol": "https",
+					"host": [
+						"localhost"
+					],
+					"port": "7066",
+					"path": [
+						"api",
+						"accounts"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get Account Balance",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "",
+						"value": "",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "https://localhost:7066/api/ledger/accounts/:accountId/balance",
+					"protocol": "https",
+					"host": [
+						"localhost"
+					],
+					"port": "7066",
+					"path": [
+						"api",
+						"ledger",
+						"accounts",
+						":accountId",
+						"balance"
+					],
+					"variable": [
+						{
+							"key": "accountId",
+							"value": "3"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Post Entry",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "",
+						"value": "",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"date\": \"2025-12-12\",\r\n    \"description\": \"Investment in the business for $50,000\",\r\n    \"reference\": \"Note-002\",\r\n    \"lines\": [\r\n        {\r\n            \"accountId\": 3,\r\n            \"amount\": 0.00,\r\n            \"description\": \"\"\r\n        },\r\n        {\r\n            \"accountId\": 4,\r\n            \"amount\": 0.00,\r\n            \"description\": \"Loan from bank UBL.\"\r\n        },\r\n        {\r\n            \"accountId\": 2,\r\n            \"amount\": 0.00,\r\n            \"description\": \"Haider's capital.\"\r\n        }\r\n    ]\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "https://localhost:7066/api/ledger/entries",
+					"protocol": "https",
+					"host": [
+						"localhost"
+					],
+					"port": "7066",
+					"path": [
+						"api",
+						"ledger",
+						"entries"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get Trial-Balance",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "",
+						"value": "",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"Asset\": {\r\n        \"ledgers\": [\r\n            {\r\n                \"Cash\": 15000.0000\r\n            },\r\n            {\r\n                \"Syed Haider New Bank\": 35000.0000\r\n            }\r\n        ],\r\n        \"Total Asset\": 50000.0000\r\n    },\r\n    \"Liability & Equity\": {\r\n        \"Liability\": {\r\n            \"ledgers\": [\r\n                {\r\n                    \"Loan from Bank\": -30000.0000\r\n                }\r\n            ],\r\n            \"Total Liability\": -30000.0000\r\n        },\r\n        \"Equity\": {\r\n            \"ledgers\": [\r\n                {\"Haider's Equity\": -20000.0000}\r\n            ],\r\n            \"Total Equity\": -20000.0000\r\n        },\r\n        \"Total Liability & Equity\": -50000.0000\r\n    }\r\n    \r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "https://localhost:7066/api/ledger/trial-balance",
+					"protocol": "https",
+					"host": [
+						"localhost"
+					],
+					"port": "7066",
+					"path": [
+						"api",
+						"ledger",
+						"trial-balance"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get Trial-Balance Advance",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "",
+						"value": "",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"Asset\": {\r\n        \"ledgers\": [\r\n            {\r\n                \"Cash\": 15000.0000\r\n            },\r\n            {\r\n                \"Syed Haider New Bank\": 35000.0000\r\n            }\r\n        ],\r\n        \"Total Asset\": 50000.0000\r\n    },\r\n    \"Liability & Equity\": {\r\n        \"Liability\": {\r\n            \"ledgers\": [\r\n                {\r\n                    \"Loan from Bank\": -30000.0000\r\n                }\r\n            ],\r\n            \"Total Liability\": -30000.0000\r\n        },\r\n        \"Equity\": {\r\n            \"ledgers\": [\r\n                {\"Haider's Equity\": -20000.0000}\r\n            ],\r\n            \"Total Equity\": -20000.0000\r\n        },\r\n        \"Total Liability & Equity\": -50000.0000\r\n    }\r\n    \r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "https://localhost:7066/api/ledger/trial-balance-advance",
+					"protocol": "https",
+					"host": [
+						"localhost"
+					],
+					"port": "7066",
+					"path": [
+						"api",
+						"ledger",
+						"trial-balance-advance"
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"auth": {
+		"type": "bearer",
+		"bearer": [
+			{
+				"key": "token",
+				"value": "{{BearerToken}}",
+				"type": "string"
+			}
+		]
+	},
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"requests": {},
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"requests": {},
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "BearerToken",
+			"value": ""
+		}
+	]
+}
